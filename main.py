@@ -14,6 +14,16 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # ---------------------------------------------------------
+    # STARTUP: Generate Q4 Data Offline
+    # ---------------------------------------------------------
+    print(f"Generating Q4 Data for {config.EMAIL}...")
+    try:
+        subprocess.run(["node", "q4_generate.js", config.EMAIL], check=True, cwd=BASE_DIR)
+        print("Q4 Data generated successfully.")
+    except Exception as e:
+        print(f"Failed to generate Q4 Data: {e}")
+        
     # Load Documents
     try:
         import csv
