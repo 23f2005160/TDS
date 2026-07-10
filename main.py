@@ -10,7 +10,6 @@ import config
 Q4_DOCS = []
 Q4_EMBEDDINGS = {}
 Q4_RERANKER = {}
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,7 +18,7 @@ async def lifespan(app: FastAPI):
     # ---------------------------------------------------------
     print(f"Generating Q4 Data for {config.EMAIL}...")
     try:
-        subprocess.run(["node", "q4_generate.js", config.EMAIL], check=True, cwd=BASE_DIR)
+        subprocess.run(["node", "q4_generate.js", config.EMAIL], check=True)
         print("Q4 Data generated successfully.")
     except Exception as e:
         print(f"Failed to generate Q4 Data: {e}")
@@ -27,20 +26,20 @@ async def lifespan(app: FastAPI):
     # Load Documents
     try:
         import csv
-        with open(os.path.join(BASE_DIR, "documents.csv"), "r", encoding="utf-8") as f:
+        with open("documents.csv", "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 # Convert year to int
                 row["year"] = int(row["year"])
                 Q4_DOCS.append(row)
                 
-        with open(os.path.join(BASE_DIR, "embeddings.json"), "r", encoding="utf-8") as f:
+        with open("embeddings.json", "r", encoding="utf-8") as f:
             embs = json.load(f)
             # Pre-convert to numpy arrays for fast cosine similarity
             for k, v in embs.items():
                 Q4_EMBEDDINGS[k] = np.array(v, dtype=np.float32)
                 
-        with open(os.path.join(BASE_DIR, "reranker_scores.json"), "r", encoding="utf-8") as f:
+        with open("reranker_scores.json", "r", encoding="utf-8") as f:
             Q4_RERANKER.update(json.load(f))
             
         print(f"Loaded {len(Q4_DOCS)} documents, {len(Q4_EMBEDDINGS)} embeddings, {len(Q4_RERANKER)} queries for reranking.")
@@ -103,7 +102,7 @@ async def root():
     return {"ok": True, "email": config.EMAIL}
 
 # ================= Q3: /q3/answer =================
-@app.post("/q3/answer")
+@app.post("/grounded-answer")
 async def q3_answer(request: Request):
     body = await request.json()
     question = body.get("question", "")
