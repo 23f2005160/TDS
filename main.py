@@ -98,7 +98,7 @@ def parse_json(s):
         m = re.search(r"\{.*\}", s, re.DOTALL)
         return json.loads(m.group(0)) if m else {}
 
-@app.api_route("/", methods=["GET", "HEAD"])
+@app.get("/")
 async def root():
     return {"ok": True, "email": config.EMAIL}
 
